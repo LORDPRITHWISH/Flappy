@@ -12,6 +12,7 @@ int width = 1280;
 int pach=height/15,pacw=height/15;
 int spc = 45;
 SDL_Texture* BIRD = NULL;
+SDL_Texture* BIRD_SPRITE = NULL;
 SDL_Texture* OBSTICLE = NULL;
 SDL_Texture* REVOBSTICLE = NULL;
 SDL_Texture* BACKGROUND = NULL;
@@ -52,6 +53,13 @@ bool loader(){
         std::cout << "Failed to load BIRD texture!" << std::endl;
         return false;
     }
+
+    BIRD_SPRITE = loadTexture("../assets/animated_bird.png");
+    if (!BIRD_SPRITE) {
+        std::cout << "Failed to load BIRD_SPRITE texture!" << std::endl;
+        return false;
+    }
+
     OBSTICLE = loadTexture("../assets/obsticle.png");
     if (!OBSTICLE) {
         std::cout << "Failed to load OBSTICLE texture!" << std::endl;
@@ -75,6 +83,11 @@ std::vector<int> pipe_gen(){
     return res;
 }
 
+
+
+
+
+
 int main(int argc, char* argv[])    {
     if(!init())    {
         std::cout << "Failed to initialize!" << std::endl;
@@ -86,22 +99,12 @@ int main(int argc, char* argv[])    {
     }
 
 
-    SDL_SetRenderDrawColor(rend,0,0,0,255);
-    SDL_RenderClear(rend);
-    SDL_RenderPresent(rend);
 
-    SDL_Rect pacdim;
-    pacdim.y = round((height+pach)/6);
-    pacdim.x = round((width+pacw)/6);
-    pacdim.h = pach;
-    pacdim.w = pacw;
+    SDL_Rect pacdim = {static_cast<int>(round(width/6)), static_cast<int>(round(height/2)), pacw, pach};
 
     bool running = true,paused = true;
-
     uint spat = 0,piptim=0;
-
     std::vector<std::vector<int>> pipes;
-
     std::vector<int> front;
 
     while(running)    {
@@ -227,6 +230,8 @@ int main(int argc, char* argv[])    {
         SDL_DestroyTexture(OBSTICLE);
     if (REVOBSTICLE != NULL) 
         SDL_DestroyTexture(REVOBSTICLE);
+    if (BIRD_SPRITE != NULL)
+        SDL_DestroyTexture(BIRD_SPRITE);
 
 
 
