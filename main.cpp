@@ -12,6 +12,7 @@ int height = 720;
 int width = 1280;
 int pach=height/15,pacw=height/15;
 int spc = 45;
+int speed = 2;
 SDL_Texture* BIRD = NULL;
 SDL_Texture* BIRD_SPRITE = NULL;
 SDL_Texture* OBSTICLE = NULL;
@@ -22,7 +23,7 @@ SDL_Texture* PAUS = NULL;
 SDL_Texture* STRT = NULL;
 SDL_Texture* GOV = NULL;
 SDL_Rect pausrect ;
-SDL_Texture* score = NULL;
+SDL_Texture* SCH = NULL;
 SDL_Texture* val = NULL;
 
 // SDL_Rect pausrect = {300,200,500,700};
@@ -125,8 +126,8 @@ bool loader(){
         std::cout << "Error loading text " << TTF_GetError() << std::endl;
         return false;
     }
-    score = textTexture("SCORE: ",{20,200,250});
-    if( !score){
+    SCH = textTexture("SCORE: ",{20,200,250});
+    if( !SCH){
         std::cout << "Error loading text " << TTF_GetError() << std::endl;
         return false;
     }
@@ -199,11 +200,11 @@ int main(int argc, char* argv[])    {
     SDL_Rect govrect = {static_cast<int>(round(width/2-250)), static_cast<int>(round(height/2-100)), 500, 200};
     SDL_Rect logorect = {10,10,40,40};
     SDL_Rect scorrect = {80,10,200,40};
-    SDL_Rect valrect = {410,5,50,50};
+    SDL_Rect valrect = {310,5,50,50};
 
 
-    int frame = 0,duration = 0;
-    bool running = true,paused = true,started = false,collided = false;
+    int frame = 0,duration = 0,score = 0;
+    bool running = true,paused = true,started = false,collided = false,resartable = false;
     uint spat = 0,piptim=0;
     std::vector<std::vector<int>> pipes;
     std::vector<int> front;
@@ -222,16 +223,7 @@ int main(int argc, char* argv[])    {
             case SDL_MOUSEBUTTONDOWN : 
             if(!started)
                 started = true;
-            if(collided){
-                pacdim.y = height/4;
-                pipes.clear();
-                spat = 0;
-                piptim = 0;
-                collided = false;
-                val = textTexture("0",{255,20,50});
-                started = false;
-            }
-            else if(paused)
+            if(paused && !collided)
                 paused = false;
             else if(spat <= (spc/4*3))
                 spat=spc;
@@ -242,20 +234,21 @@ int main(int argc, char* argv[])    {
                     if(!started)
                         started = true;
                     if(collided){
-                        pacdim.y = height/4;
-                        pipes.clear();
-                        spat = 0;
-                        piptim = 0;
-                        collided = false;
-                        val = textTexture("0",{255,20,50});
-                        started = false;
+                        if(resartable){
+                            pacdim.y = height/4;
+                            pipes.clear();
+                            spat = 0;
+                            piptim = 0;
+                            collided = false;
+                            score = 0;
+                            val = textTexture("0",{255,200,50});
+                            started = false;
+                        }
                     }
                     else if(paused)
                         paused = false;
                     else if(spat <= (spc/4*3))
                         spat=spc;
-
-                    
                 }
                 if(ev.key.keysym.sym == SDLK_ESCAPE){
                     running = false;
@@ -267,7 +260,8 @@ int main(int argc, char* argv[])    {
                         spat = 0;
                         piptim = 0;
                         collided = false;
-                        val = textTexture("0",{255,20,50});
+                        score = 0;
+                        val = textTexture("0",{255,200,50});
                         started = false;
                     }
                     else    {
@@ -276,6 +270,10 @@ int main(int argc, char* argv[])    {
                             started = true;
                     }
                 }
+                break;
+                case SDL_KEYUP:
+                if(ev.key.keysym.sym == SDLK_SPACE && collided)
+                    resartable = true;
                 break;
             }
         }
@@ -315,7 +313,7 @@ int main(int argc, char* argv[])    {
             SDL_Rect rrr;
             SDL_SetRenderDrawColor(rend,0,200,20,255);
             for(int i=0;i<pipes.size();i++){
-                pipes[i][0]-=2;
+                pipes[i][0]-=speed;
                 rrr.y = 0;
                 rrr.x = pipes[i][0];
                 rrr.h = pipes[i][1];
@@ -330,9 +328,16 @@ int main(int argc, char* argv[])    {
                 // SDL_RenderFillRect(rend,&rrr);
                 SDL_RenderCopy(rend, OBSTICLE, NULL, &rrr);
 
-
+                // std::cout<<pipes.size()<<" - "<<pipes.size()-3<<'\n';
                 if(i>pipes.size()-3){
                     if(((pacdim.x+pacdim.w)>=rrr.x) && ((pacdim.x)<=(rrr.x+rrr.w))){
+                        // std::cout<<"<0>";
+                        if(((rrr.x+rrr.w)<=pacdim.x+speed)){
+                            val = textTexture(std::to_string(++score),{20,200,250});
+                            SDL_QueryTexture(val,NULL,NULL,&valrect.w,&valrect.h);
+                            // valrect.x = val->w;
+                        }
+
                         SDL_SetRenderDrawColor(rend,200,200,220,255);
                         SDL_RenderDrawLine(rend,220,0,220,height);
                         SDL_RenderDrawLine(rend,270,0,270,height);
@@ -343,15 +348,15 @@ int main(int argc, char* argv[])    {
                             SDL_RenderDrawLine(rend,0,pacdim.y+50,width,pacdim.y+50);
                             collided = true;
                             paused = true;
+                            resartable = false;
                         }
                         SDL_SetRenderDrawColor(rend,0,200,20,255);
                     }
                 }
             }
+
             if(!pipes.empty() && pipes[pipes.size()-1][0]< -100)
                 pipes.pop_back();
-
-
 
             piptim++;
             pacdim.y+= 6;
@@ -380,7 +385,7 @@ int main(int argc, char* argv[])    {
 
         }
         if(started){
-            SDL_RenderCopy(rend, score, NULL, &scorrect);
+            SDL_RenderCopy(rend, SCH, NULL, &scorrect);
             SDL_RenderCopy(rend, val, NULL, &valrect);
         }
         SDL_RenderCopy(rend, BIRD, NULL, &logorect);
