@@ -335,6 +335,8 @@ int main(int argc, char* argv[])    {
                         if(((rrr.x+rrr.w)<=pacdim.x+speed)){
                             val = textTexture(std::to_string(++score),{20,200,250});
                             SDL_QueryTexture(val,NULL,NULL,&valrect.w,&valrect.h);
+                            valrect.w = (valrect.w*50)/valrect.h;
+                            valrect.h = 50;
                             // valrect.x = val->w;
                         }
 
